@@ -12,7 +12,7 @@ import { MdRemoveLinkDefinitionCodeActionProvider } from './languageFeatures/cod
 import { MdDefinitionProvider } from './languageFeatures/definitions';
 import { DiagnosticComputer, DiagnosticOptions, DiagnosticsManager, IPullDiagnosticsManager } from './languageFeatures/diagnostics';
 import { MdDocumentHighlightProvider } from './languageFeatures/documentHighlights';
-import { createWorkspaceLinkCache, MdLinkProvider, ResolvedDocumentLinkTarget } from './languageFeatures/documentLinks';
+import { createWorkspaceLinkCache, IMdLinkComputer, MdLinkComputer, MdLinkProvider, ResolvedDocumentLinkTarget } from './languageFeatures/documentLinks';
 import { MdDocumentSymbolProvider } from './languageFeatures/documentSymbols';
 import { FileRename, MdFileRenameProvider } from './languageFeatures/fileRename';
 import { MdFoldingProvider } from './languageFeatures/folding';
@@ -30,7 +30,7 @@ import { isWorkspaceWithFileWatching, IWorkspace } from './workspace';
 
 export { LsConfiguration, PreferredMdPathExtensionStyle } from './config';
 export { DiagnosticCode, DiagnosticLevel, DiagnosticOptions, IPullDiagnosticsManager } from './languageFeatures/diagnostics';
-export { ResolvedDocumentLinkTarget } from './languageFeatures/documentLinks';
+export { resolveInternalDocumentLink, ExternalHref, HrefKind, InternalHref, IMdLinkComputer, LinkHref, MdLink, MdLinkKind, ReferenceHref, ResolvedDocumentLinkTarget } from './languageFeatures/documentLinks';
 export { FileRename } from './languageFeatures/fileRename';
 export { IncludeWorkspaceHeaderCompletions, PathCompletionOptions as MdPathCompletionOptions } from './languageFeatures/pathCompletions';
 export { RenameNotSupportedAtLocationError } from './languageFeatures/rename';
@@ -211,6 +211,12 @@ export interface LanguageServiceInitialization extends Partial<LsConfiguration> 
 	readonly parser: IMdParser;
 
 	/**
+	 * The {@link IMdLinkComputer link computer} that the  {@link IMdLanguageService language service} uses to
+	 * find links in files.
+	 */
+	readonly linkComputer?: IMdLinkComputer;
+
+	/**
 	 * The {@link ILogger logger} that the  {@link IMdLanguageService language service} use for logging messages.
 	 */
 	readonly logger: ILogger;
@@ -226,9 +232,10 @@ export function createLanguageService(init: LanguageServiceInitialization): IMdL
 	const tocProvider = new MdTableOfContentsProvider(init.parser, init.workspace, logger);
 	const smartSelectProvider = new MdSelectionRangeProvider(init.parser, tocProvider, logger);
 	const foldingProvider = new MdFoldingProvider(init.parser, tocProvider, logger);
-	const linkProvider = new MdLinkProvider(config, init.parser, init.workspace, tocProvider, logger);
+	const linkComputer = init.linkComputer ?? new MdLinkComputer(init.parser, init.workspace);
+	const linkProvider = new MdLinkProvider(config, init.workspace, linkComputer, tocProvider, logger);
 	const pathCompletionProvider = new MdPathCompletionProvider(config, init.workspace, init.parser, linkProvider, tocProvider);
-	const linkCache = createWorkspaceLinkCache(init.parser, init.workspace);
+	const linkCache = createWorkspaceLinkCache(init.workspace, linkComputer);
 	const referencesProvider = new MdReferencesProvider(config, init.parser, init.workspace, tocProvider, linkCache, logger);
 	const definitionsProvider = new MdDefinitionProvider(config, init.workspace, tocProvider, linkCache);
 	const renameProvider = new MdRenameProvider(config, init.workspace, referencesProvider, init.parser.slugifier, logger);
