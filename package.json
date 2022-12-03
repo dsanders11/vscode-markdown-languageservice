@@ -1,5 +1,5 @@
 {
-  "name": "vscode-markdown-languageservice",
+  "name": "@dsanders11/vscode-markdown-languageservice",
   "description": "Markdown language service",
   "version": "0.3.0",
   "author": "Microsoft Corporation",
@@ -46,9 +46,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/vscode-markdown-languageservice.git"
+    "url": "https://github.com/dsanders11/vscode-markdown-languageservice.git"
   },
   "bugs": {
-    "url": "https://github.com/microsoft/vscode-markdown-languageservice/issues"
+    "url": "https://github.com/dsanders11/vscode-markdown-languageservice/issues"
   }
 }
